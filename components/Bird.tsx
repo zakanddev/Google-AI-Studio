@@ -10,7 +10,7 @@ interface BirdProps {
 const Bird: React.FC<BirdProps> = ({ y, imageUrl, rotation }) => {
   return (
     <div
-      className="absolute bg-cover bg-center rounded-md"
+      className="absolute bg-cover bg-center rounded-full"
       style={{
         width: BIRD_SIZE,
         height: BIRD_SIZE,
@@ -18,7 +18,7 @@ const Bird: React.FC<BirdProps> = ({ y, imageUrl, rotation }) => {
         left: BIRD_LEFT_POSITION,
         backgroundImage: `url(${imageUrl})`,
         transform: `rotate(${rotation}deg)`,
-        transition: 'transform 0.2s ease-out, top 0.1s linear',
+        transition: 'transform 0.2s ease-out',
         boxShadow: '0 4px 15px rgba(0, 0, 0, 0.4)'
       }}
     />

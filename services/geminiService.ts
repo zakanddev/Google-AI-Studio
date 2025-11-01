@@ -1,8 +1,20 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { type GameTheme } from '../types';
 
-// Per @google/genai guidelines, API key must be from process.env.API_KEY and assumed to be present.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+let ai: GoogleGenAI | null = null;
+let initializationError: Error | null = null;
+
+// In a browser-only environment like a simple local server, `process.env` is not defined.
+// This try-catch block prevents the app from crashing and instead allows us to show a
+// user-friendly error message in the UI.
+try {
+  // Per @google/genai guidelines, API key must be from process.env.API_KEY.
+  ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+} catch (e) {
+  console.error("Failed to initialize GoogleGenAI. This is expected for local development without a build process that injects environment variables.", e);
+  initializationError = new Error("Could not initialize the AI service. Make sure the API key is configured in your execution environment.");
+}
+
 
 // Schema for the text-based theme generation
 const themeDescriptionSchema = {
@@ -38,6 +50,10 @@ const themeDescriptionSchema = {
 };
 
 const generateImage = async (prompt: string): Promise<string> => {
+    if (!ai) {
+        throw initializationError || new Error("AI service is not available.");
+    }
+
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
       contents: {
@@ -59,6 +75,10 @@ const generateImage = async (prompt: string): Promise<string> => {
 
 
 export const generateTheme = async (prompt: string): Promise<GameTheme> => {
+  if (!ai) {
+    throw initializationError || new Error("AI service is not available.");
+  }
+  
   // Per @google/genai guidelines, API key is a hard requirement and no fallback should be implemented.
   try {
     // 1. Generate the theme descriptions and metadata

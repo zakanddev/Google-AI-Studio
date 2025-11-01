@@ -1,13 +1,14 @@
 import React from 'react';
-import { SCREEN_HEIGHT, PIPE_WIDTH, PIPE_GAP } from '../constants';
+import { SCREEN_HEIGHT, PIPE_WIDTH } from '../constants';
 
 interface PipeProps {
   x: number;
   gapY: number;
   color: string;
+  pipeGap: number;
 }
 
-const Pipe: React.FC<PipeProps> = ({ x, gapY, color }) => {
+const Pipe: React.FC<PipeProps> = ({ x, gapY, color, pipeGap }) => {
   return (
     <>
       <div
@@ -27,9 +28,9 @@ const Pipe: React.FC<PipeProps> = ({ x, gapY, color }) => {
         className="absolute"
         style={{
           left: x,
-          top: gapY + PIPE_GAP,
+          top: gapY + pipeGap,
           width: PIPE_WIDTH,
-          height: SCREEN_HEIGHT - (gapY + PIPE_GAP),
+          height: SCREEN_HEIGHT - (gapY + pipeGap),
           backgroundColor: color,
           border: '2px solid #111',
           borderRadius: '8px',

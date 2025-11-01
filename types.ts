@@ -22,4 +22,5 @@ export interface Pipe {
     x: number;
     gapY: number;
     isScored: boolean;
+    gapSize: number;
 }
