@@ -19,17 +19,51 @@ const Game: React.FC<GameProps> = ({ gameTheme, onBack }) => {
   const [gameState, setGameState] = useState<GameState>('ready');
   const [birdY, setBirdY] = useState(SCREEN_HEIGHT / 2 - BIRD_SIZE / 2);
   const [birdVelocity, setBirdVelocity] = useState(0);
+  const [birdRotation, setBirdRotation] = useState(0);
   const [pipes, setPipes] = useState<PipeType[]>([]);
   const [score, setScore] = useState(0);
-  const gameLoopRef = useRef<number>();
+  const [highScore, setHighScore] = useState(0);
+  const [isAssetsLoading, setIsAssetsLoading] = useState(true);
+  // FIX: Initialize useRef with null to provide an initial value.
+  const gameLoopRef = useRef<number | null>(null);
+
+  // Load high score from local storage on mount
+  useEffect(() => {
+    const savedHighScore = localStorage.getItem('ai-flappy-highscore');
+    if (savedHighScore) {
+      setHighScore(parseInt(savedHighScore, 10));
+    }
+  }, []);
+  
+  // Preload assets
+  useEffect(() => {
+    setIsAssetsLoading(true);
+    const charImg = new Image();
+    const bgImg = new Image();
+    
+    charImg.src = gameTheme.character.imageUrl;
+    bgImg.src = gameTheme.background.imageUrl;
+
+    Promise.all([
+      new Promise(resolve => { charImg.onload = resolve; }),
+      new Promise(resolve => { bgImg.onload = resolve; })
+    ]).then(() => {
+      setIsAssetsLoading(false);
+    });
+  }, [gameTheme]);
 
   const resetGame = useCallback(() => {
     setGameState('ready');
     setBirdY(SCREEN_HEIGHT / 2 - BIRD_SIZE / 2);
     setBirdVelocity(0);
+    setBirdRotation(0);
+    if (score > highScore) {
+      setHighScore(score);
+      localStorage.setItem('ai-flappy-highscore', score.toString());
+    }
     setScore(0);
     setPipes([createPipe(SCREEN_WIDTH * 1.5), createPipe(SCREEN_WIDTH * 1.5 + PIPE_SPACING)]);
-  }, []);
+  }, [score, highScore]);
 
   useEffect(() => {
     resetGame();
@@ -44,9 +78,13 @@ const Game: React.FC<GameProps> = ({ gameTheme, onBack }) => {
     if (gameState !== 'playing') return;
 
     // Bird physics
-    setBirdVelocity(v => Math.min(v + GRAVITY, MAX_VELOCITY));
-    setBirdY(y => y + birdVelocity);
+    const newVelocity = Math.min(birdVelocity + GRAVITY, MAX_VELOCITY);
+    setBirdVelocity(newVelocity);
+    setBirdY(y => y + newVelocity);
     const birdBottom = birdY + BIRD_SIZE;
+    
+    // Bird rotation
+    setBirdRotation(Math.max(-30, Math.min(90, newVelocity * 5)));
 
     // Ground and ceiling collision
     if (birdBottom > SCREEN_HEIGHT || birdY < 0) {
@@ -101,13 +139,39 @@ const Game: React.FC<GameProps> = ({ gameTheme, onBack }) => {
   }, [gameState, gameLoop]);
 
   const handleUserAction = useCallback(() => {
+    if (isAssetsLoading) return;
     if (gameState === 'ready') {
       setGameState('playing');
       setBirdVelocity(JUMP_VELOCITY);
     } else if (gameState === 'playing') {
       setBirdVelocity(JUMP_VELOCITY);
+    } else if (gameState === 'gameOver') {
+      resetGame();
     }
-  }, [gameState]);
+  }, [gameState, resetGame, isAssetsLoading]);
+  
+  if (isAssetsLoading) {
+    return (
+        <div className="flex flex-col items-center">
+            <div
+                className="relative overflow-hidden rounded-lg shadow-2xl border-2 border-purple-500/50 flex items-center justify-center bg-gray-800"
+                style={{ width: SCREEN_WIDTH, height: SCREEN_HEIGHT }}
+            >
+                <div className="text-white text-center">
+                    <svg className="animate-spin mx-auto h-10 w-10 text-white mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p className="text-lg font-bold">Generating Assets...</p>
+                    <p className="text-sm text-gray-400">Please wait a moment.</p>
+                </div>
+            </div>
+            <button onClick={onBack} className="mt-4 px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600 transition">
+                Back
+            </button>
+        </div>
+    );
+  }
   
   return (
     <div className="flex flex-col items-center">
@@ -115,18 +179,18 @@ const Game: React.FC<GameProps> = ({ gameTheme, onBack }) => {
         className="relative overflow-hidden rounded-lg shadow-2xl border-2 border-purple-500/50 cursor-pointer"
         style={{ width: SCREEN_WIDTH, height: SCREEN_HEIGHT }}
         onClick={handleUserAction}
-        onTouchStart={handleUserAction}
+        onTouchStart={(e) => { e.preventDefault(); handleUserAction(); }}
       >
         <Background imageUrl={gameTheme.background.imageUrl} />
         {pipes.map((pipe, index) => (
           <Pipe key={index} x={pipe.x} gapY={pipe.gapY} color={gameTheme.obstacle.color} />
         ))}
-        <Bird y={birdY} imageUrl={gameTheme.character.imageUrl} />
+        <Bird y={birdY} imageUrl={gameTheme.character.imageUrl} rotation={birdRotation} />
         <div className="absolute top-4 left-1/2 -translate-x-1/2 text-5xl font-bold text-white" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.7)' }}>
           {score}
         </div>
         {gameState === 'ready' && <StartScreen theme={gameTheme} />}
-        {gameState === 'gameOver' && <GameOverScreen score={score} onRestart={resetGame} />}
+        {gameState === 'gameOver' && <GameOverScreen score={score} highScore={highScore} onRestart={resetGame} />}
       </div>
       <button onClick={onBack} className="mt-4 px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600 transition">
         Change Theme

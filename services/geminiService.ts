@@ -1,16 +1,11 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { type GameTheme } from '../types';
 
-const API_KEY = process.env.API_KEY;
+// Per @google/genai guidelines, API key must be from process.env.API_KEY and assumed to be present.
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 
-if (!API_KEY) {
-  // This is a fallback for development. In a real environment, the key should be set.
-  console.warn("Gemini API key not found. Using a placeholder. Please set the API_KEY environment variable.");
-}
-
-const ai = new GoogleGenAI({ apiKey: API_KEY! });
-
-const responseSchema = {
+// Schema for the text-based theme generation
+const themeDescriptionSchema = {
     type: Type.OBJECT,
     properties: {
         themeName: { type: Type.STRING, description: 'A creative name for the theme.' },
@@ -18,10 +13,9 @@ const responseSchema = {
             type: Type.OBJECT,
             properties: {
                 name: { type: Type.STRING, description: 'The name of the character.' },
-                description: { type: Type.STRING, description: 'A short, visually descriptive sentence for the character.' },
-                imageUrl: { type: Type.STRING, description: 'A placeholder image URL from `https://picsum.photos/200`.' },
+                description: { type: Type.STRING, description: 'A detailed visual description for an image generation AI. Describe the character, its appearance, and its pose as if it is the character in a Flappy Bird style game. E.g., "A cute, round, cartoon baby dragon with small wings, seen from the side, flying forward."' },
             },
-            required: ['name', 'description', 'imageUrl']
+            required: ['name', 'description']
         },
         obstacle: {
             type: Type.OBJECT,
@@ -35,45 +29,71 @@ const responseSchema = {
         background: {
             type: Type.OBJECT,
             properties: {
-                description: { type: Type.STRING, description: 'A short, visually descriptive sentence for the background.' },
-                imageUrl: { type: Type.STRING, description: 'A placeholder image URL from `https://picsum.photos/400/600`.' },
+                description: { type: Type.STRING, description: 'A detailed visual description for an image generation AI. Describe a vertically scrolling background for a Flappy Bird style game. E.g., "A vibrant, magical forest with glowing mushrooms and tall, whimsical trees, cartoon style."' },
             },
-            required: ['description', 'imageUrl']
+            required: ['description']
         }
     },
     required: ['themeName', 'character', 'obstacle', 'background']
 };
 
+const generateImage = async (prompt: string): Promise<string> => {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash-image',
+      contents: {
+        parts: [{ text: prompt }],
+      },
+      config: {
+          responseModalities: [Modality.IMAGE],
+      },
+    });
+    
+    for (const part of response.candidates?.[0]?.content?.parts ?? []) {
+        if (part.inlineData) {
+            const base64ImageBytes: string = part.inlineData.data;
+            return `data:image/png;base64,${base64ImageBytes}`;
+        }
+    }
+    throw new Error('Image generation failed to return an image.');
+};
+
 
 export const generateTheme = async (prompt: string): Promise<GameTheme> => {
-  if (!API_KEY) {
-    // Fallback for developers without an API key
-    return {
-      themeName: "Developer Mode",
-      character: { name: "Debug Duck", description: "A classic rubber duck, but its pixels are showing.", imageUrl: "https://picsum.photos/200" },
-      obstacle: { name: "Code Brackets", description: "Giant, menacing curly braces that threaten to encapsulate you.", color: "#4ade80" },
-      background: { description: "A scrolling background of binary code and digital rain.", imageUrl: "https://picsum.photos/400/600" }
-    };
-  }
-
+  // Per @google/genai guidelines, API key is a hard requirement and no fallback should be implemented.
   try {
-    const response = await ai.models.generateContent({
+    // 1. Generate the theme descriptions and metadata
+    const descriptionResponse = await ai.models.generateContent({
         model: "gemini-2.5-flash",
-        contents: `Generate a theme for a "Flappy Bird" style game based on this idea: "${prompt}". Provide a character, obstacles, and a background. Ensure all image URLs are valid placeholders.`,
+        contents: `Generate a theme for a "Flappy Bird" style game based on this idea: "${prompt}". Provide a character, obstacles, and a background. Be creative and descriptive for the image generation prompts.`,
         config: {
             responseMimeType: "application/json",
-            responseSchema,
+            responseSchema: themeDescriptionSchema,
         },
     });
 
-    const jsonText = response.text.trim();
-    const theme = JSON.parse(jsonText);
+    const jsonText = descriptionResponse.text.trim();
+    const themeDescriptions = JSON.parse(jsonText);
     
-    // Ensure placeholder URLs are valid
-    theme.character.imageUrl = `https://picsum.photos/seed/${Math.random()}/200`;
-    theme.background.imageUrl = `https://picsum.photos/seed/${Math.random()}/400/600`;
+    // 2. Generate images based on the descriptions
+    const [characterImageUrl, backgroundImageUrl] = await Promise.all([
+        generateImage(themeDescriptions.character.description),
+        generateImage(themeDescriptions.background.description)
+    ]);
 
-    return theme as GameTheme;
+    // 3. Assemble the final theme object
+    return {
+        themeName: themeDescriptions.themeName,
+        character: {
+            name: themeDescriptions.character.name,
+            description: themeDescriptions.character.description,
+            imageUrl: characterImageUrl,
+        },
+        obstacle: themeDescriptions.obstacle,
+        background: {
+            description: themeDescriptions.background.description,
+            imageUrl: backgroundImageUrl,
+        },
+    };
   } catch (error) {
     console.error("Error generating theme with Gemini:", error);
     throw new Error("Failed to generate game theme. The AI might be busy, please try again.");
