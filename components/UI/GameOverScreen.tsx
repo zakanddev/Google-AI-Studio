@@ -4,18 +4,20 @@ interface GameOverScreenProps {
   score: number;
   highScore: number;
   onRestart: () => void;
+  onBack: () => void;
 }
 
-const GameOverScreen: React.FC<GameOverScreenProps> = ({ score, highScore, onRestart }) => {
+const GameOverScreen: React.FC<GameOverScreenProps> = ({ score, highScore, onRestart, onBack }) => {
   
   const handleContainerClick = (e: React.MouseEvent) => {
     // This allows clicking anywhere on the overlay to restart
+    e.stopPropagation();
     onRestart();
   };
 
-  const handleButtonClick = (e: React.MouseEvent) => {
+  const handleButtonClick = (e: React.MouseEvent, action: () => void) => {
     e.stopPropagation(); // Prevent the container click from firing as well
-    onRestart();
+    action();
   };
   
   return (
@@ -35,12 +37,20 @@ const GameOverScreen: React.FC<GameOverScreenProps> = ({ score, highScore, onRes
             <p className="text-4xl font-bold text-cyan-400">{highScore}</p>
           </div>
         </div>
-        <button
-          onClick={handleButtonClick}
-          className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold rounded-md hover:opacity-90 transition-opacity text-xl"
-        >
-          Try Again
-        </button>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <button
+            onClick={(e) => handleButtonClick(e, onRestart)}
+            className="w-full px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white font-bold rounded-md hover:opacity-90 transition-opacity text-xl"
+          >
+            Try Again
+          </button>
+          <button
+            onClick={(e) => handleButtonClick(e, onBack)}
+            className="w-full px-6 py-3 bg-gray-600 text-white font-bold rounded-md hover:bg-gray-500 transition-colors text-xl"
+          >
+            Change Theme
+          </button>
+        </div>
       </div>
     </div>
   );

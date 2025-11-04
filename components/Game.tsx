@@ -3,13 +3,15 @@ import { type GameTheme, type GameState, type Pipe as PipeType } from '../types'
 import {
   SCREEN_HEIGHT, SCREEN_WIDTH, BIRD_SIZE, BIRD_LEFT_POSITION, GRAVITY,
   JUMP_VELOCITY, MAX_VELOCITY, PIPE_WIDTH, PIPE_GAP, PIPE_SPACING, PIPE_SPEED,
-  SCORE_DIFFICULTY_INTERVAL, PIPE_SPEED_INCREASE, PIPE_GAP_DECREASE, MIN_PIPE_GAP, MAX_PIPE_SPEED
+  SCORE_DIFFICULTY_INTERVAL, PIPE_SPEED_INCREASE, PIPE_GAP_DECREASE, MIN_PIPE_GAP, MAX_PIPE_SPEED, BIRD_HITBOX_SCALE
 } from '../constants';
+import * as historyService from '../services/historyService';
 import Bird from './Bird';
 import Pipe from './Pipe';
 import Background from './Background';
 import StartScreen from './UI/StartScreen';
 import GameOverScreen from './UI/GameOverScreen';
+import BirdTrail from './BirdTrail';
 
 interface GameProps {
   gameTheme: GameTheme;
@@ -26,6 +28,7 @@ const Game: React.FC<GameProps> = ({ gameTheme, onBack }) => {
   const [highScore, setHighScore] = useState(0);
   const [isAssetsLoading, setIsAssetsLoading] = useState(true);
   const [bgScroll, setBgScroll] = useState(0);
+  const [trail, setTrail] = useState<{ x: number; y: number }[]>([]);
   const gameLoopRef = useRef<number | null>(null);
   const scoreRef = useRef(score); // Ref to hold score for callbacks
 
@@ -53,7 +56,7 @@ const Game: React.FC<GameProps> = ({ gameTheme, onBack }) => {
 
     Promise.all([
       new Promise((resolve, reject) => { charImg.onload = resolve; charImg.onerror = reject; }),
-      new Promise((resolve, reject) => { bgImg.onload = resolve; bgImg.onerror = reject; })
+      new Promise((resolve, reject) => { bgImg.onload = resolve; bgImg.onerror = reject; }),
     ]).then(() => {
       setIsAssetsLoading(false);
     }).catch(err => {
@@ -72,11 +75,13 @@ const Game: React.FC<GameProps> = ({ gameTheme, onBack }) => {
     setBirdY(SCREEN_HEIGHT / 2 - BIRD_SIZE / 2);
     setBirdVelocity(0);
     setBirdRotation(0);
+    setTrail([]);
     
     // Use scoreRef to access latest score inside functional update
-    // This avoids making `resetGame` dependent on `score` or `highScore`
+    const finalScore = scoreRef.current;
+    historyService.updateHighScore(gameTheme.prompt, finalScore);
+
     setHighScore(currentHighScore => {
-      const finalScore = scoreRef.current;
       if (finalScore > currentHighScore) {
         localStorage.setItem('ai-flappy-highscore', finalScore.toString());
         return finalScore;
@@ -87,7 +92,7 @@ const Game: React.FC<GameProps> = ({ gameTheme, onBack }) => {
     setScore(0);
     setPipes([createPipe(SCREEN_WIDTH * 1.5, PIPE_GAP), createPipe(SCREEN_WIDTH * 1.5 + PIPE_SPACING, PIPE_GAP)]);
     setBgScroll(0);
-  }, [createPipe]);
+  }, [createPipe, gameTheme.prompt]);
 
   // This effect now correctly resets the game only when the theme changes.
   useEffect(() => {
@@ -107,20 +112,26 @@ const Game: React.FC<GameProps> = ({ gameTheme, onBack }) => {
     const nextBirdVelocity = Math.min(birdVelocity + GRAVITY, MAX_VELOCITY);
     const nextBirdY = birdY + nextBirdVelocity;
 
-    // 1. Ground and Ceiling Collision
+    // 1. Ground and Ceiling Collision (using full sprite size for visual correctness)
     if (nextBirdY + BIRD_SIZE >= SCREEN_HEIGHT || nextBirdY <= 0) {
       setGameState('gameOver');
       return;
     }
 
-    // 2. Pipe Collision
+    // 2. Pipe Collision (using smaller hitbox for fairness)
+    const hitboxInset = (BIRD_SIZE * (1 - BIRD_HITBOX_SCALE)) / 2;
+    const hitboxTop = nextBirdY + hitboxInset;
+    const hitboxBottom = nextBirdY + BIRD_SIZE - hitboxInset;
+    const hitboxLeft = BIRD_LEFT_POSITION + hitboxInset;
+    const hitboxRight = BIRD_LEFT_POSITION + BIRD_SIZE - hitboxInset;
+
     for (const pipe of pipes) {
-      const birdRight = BIRD_LEFT_POSITION + BIRD_SIZE;
       const pipeRight = pipe.x + PIPE_WIDTH;
 
-      if (birdRight > pipe.x && BIRD_LEFT_POSITION < pipeRight) {
-        // Use the pipe's own gapSize for fair collision detection
-        if (nextBirdY < pipe.gapY || nextBirdY + BIRD_SIZE > pipe.gapY + pipe.gapSize) {
+      // Check for X-axis overlap with the smaller hitbox
+      if (hitboxRight > pipe.x && hitboxLeft < pipeRight) {
+        // Check for Y-axis collision (hitting the top or bottom pipe)
+        if (hitboxTop < pipe.gapY || hitboxBottom > pipe.gapY + pipe.gapSize) {
           setGameState('gameOver');
           return;
         }
@@ -150,11 +161,22 @@ const Game: React.FC<GameProps> = ({ gameTheme, onBack }) => {
         finalPipes = [...finalPipes, newPipe];
     }
     
+    // --- Trail Update ---
+    setTrail(prevTrail => {
+      const newPoint = { x: BIRD_LEFT_POSITION + BIRD_SIZE / 2, y: nextBirdY + BIRD_SIZE / 2 };
+      // Shift all existing points to the left and filter out old ones
+      const shiftedTrail = prevTrail
+        .map(p => ({ ...p, x: p.x - currentPipeSpeed }))
+        .filter(p => p.x > -10); // Keep points until they are just off-screen
+      return [newPoint, ...shiftedTrail];
+    });
+
     // --- Commit all state changes for the next render ---
     setBirdVelocity(nextBirdVelocity);
     setBirdY(nextBirdY);
     setBirdRotation(Math.max(-30, Math.min(90, nextBirdVelocity * 5)));
     setPipes(finalPipes);
+
     if (scoreDelta > 0) {
       setScore(prevScore => prevScore + scoreDelta);
     }
@@ -177,6 +199,7 @@ const Game: React.FC<GameProps> = ({ gameTheme, onBack }) => {
   const handleUserAction = useCallback(() => {
     if (isAssetsLoading) return;
     if (gameState === 'ready') {
+      historyService.incrementTries(gameTheme.prompt);
       setGameState('playing');
       setBirdVelocity(JUMP_VELOCITY);
     } else if (gameState === 'playing') {
@@ -184,7 +207,7 @@ const Game: React.FC<GameProps> = ({ gameTheme, onBack }) => {
     } else if (gameState === 'gameOver') {
       resetGame();
     }
-  }, [gameState, resetGame, isAssetsLoading]);
+  }, [gameState, resetGame, isAssetsLoading, gameTheme.prompt]);
 
   if (isAssetsLoading) {
     return (
@@ -199,7 +222,7 @@ const Game: React.FC<GameProps> = ({ gameTheme, onBack }) => {
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                     <p className="text-lg font-bold">Generating Assets...</p>
-                    <p className="text-sm text-gray-400">Please wait a moment.</p>
+                    <p className="text-sm text-gray-400">This may take a moment.</p>
                 </div>
             </div>
             <button onClick={onBack} className="mt-4 px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600 transition">
@@ -221,6 +244,7 @@ const Game: React.FC<GameProps> = ({ gameTheme, onBack }) => {
         aria-label="Game Area"
       >
         <Background imageUrl={gameTheme.background.imageUrl} scrollPosition={bgScroll} />
+        <BirdTrail points={trail} />
         {pipes.map((pipe, index) => (
           <Pipe key={index} x={pipe.x} gapY={pipe.gapY} color={gameTheme.obstacle.color} pipeGap={pipe.gapSize} />
         ))}
@@ -229,7 +253,7 @@ const Game: React.FC<GameProps> = ({ gameTheme, onBack }) => {
           {score}
         </div>
         {gameState === 'ready' && <StartScreen theme={gameTheme} />}
-        {gameState === 'gameOver' && <GameOverScreen score={score} highScore={highScore} onRestart={resetGame} />}
+        {gameState === 'gameOver' && <GameOverScreen score={score} highScore={highScore} onRestart={resetGame} onBack={onBack} />}
       </div>
       <button onClick={onBack} className="mt-4 px-4 py-2 bg-gray-700 text-white rounded-md hover:bg-gray-600 transition">
         Change Theme

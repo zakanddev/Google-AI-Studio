@@ -5,6 +5,7 @@ import { type GameTheme } from './types';
 
 const App: React.FC = () => {
   const [gameTheme, setGameTheme] = useState<GameTheme | null>(null);
+  const [prompt, setPrompt] = useState<string>('A pixel art knight flying through a spooky, haunted castle.');
 
   const handleThemeGenerated = useCallback((theme: GameTheme) => {
     setGameTheme(theme);
@@ -21,7 +22,11 @@ const App: React.FC = () => {
           AI Flappy Game
         </h1>
         {!gameTheme ? (
-          <ThemeGenerator onThemeGenerated={handleThemeGenerated} />
+          <ThemeGenerator
+            prompt={prompt}
+            onPromptChange={setPrompt}
+            onThemeGenerated={handleThemeGenerated}
+          />
         ) : (
           <Game gameTheme={gameTheme} onBack={handleBackToThemeSelection} />
         )}

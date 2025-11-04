@@ -1,5 +1,6 @@
 export interface GameTheme {
   themeName: string;
+  prompt: string;
   character: {
     name: string;
     description: string;
@@ -14,6 +15,12 @@ export interface GameTheme {
     description: string;
     imageUrl: string;
   };
+}
+
+export interface PromptHistoryItem {
+  prompt: string;
+  highScore: number;
+  tries: number;
 }
 
 export type GameState = 'ready' | 'playing' | 'gameOver';
