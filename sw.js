@@ -9,6 +9,7 @@ const urlsToCache = [
   '/constants.ts',
   '/services/geminiService.ts',
   '/services/historyService.ts',
+  '/services/preloadedThemes.ts',
   '/components/Game.tsx',
   '/components/Bird.tsx',
   '/components/Pipe.tsx',
