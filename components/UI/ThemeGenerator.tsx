@@ -2,7 +2,6 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { generateTheme } from '../../services/geminiService';
 import { getHistory, addPromptToHistory } from '../../services/historyService';
 import { type GameTheme, type PromptHistoryItem } from '../../types';
-import { preloadedThemes } from '../../services/preloadedThemes';
 
 interface ThemeGeneratorProps {
   prompt: string;
@@ -44,11 +43,6 @@ const ThemeGenerator: React.FC<ThemeGeneratorProps> = ({ prompt, onPromptChange,
     onPromptChange(p);
     setIsHistoryVisible(false);
   }
-  
-  const handleSelectPreloadedTheme = (theme: GameTheme) => {
-    addPromptToHistory(theme.prompt);
-    onThemeGenerated(theme);
-  };
 
   return (
     <>
@@ -93,24 +87,6 @@ const ThemeGenerator: React.FC<ThemeGeneratorProps> = ({ prompt, onPromptChange,
           {error && <p className="mt-4 text-red-400">{error}</p>}
         </form>
       </div>
-
-      <div className="w-full mt-6">
-        <h3 className="text-center text-gray-400 mb-4">Or Choose a Pre-made Theme</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {preloadedThemes.map((theme) => (
-                <button
-                    key={theme.themeName}
-                    onClick={() => handleSelectPreloadedTheme(theme)}
-                    disabled={isLoading}
-                    className="p-3 bg-gray-800/70 rounded-lg border border-purple-500/30 text-left hover:bg-purple-900/40 transition-colors disabled:opacity-50"
-                >
-                    <p className="font-bold text-white">{theme.themeName}</p>
-                    <p className="text-sm text-gray-300">{theme.character.name} vs. {theme.obstacle.name}</p>
-                </button>
-            ))}
-        </div>
-      </div>
-
 
       {isHistoryVisible && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
