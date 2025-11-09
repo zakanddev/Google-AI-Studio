@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { generateTheme } from '../../services/geminiService';
 import { getHistory, addPromptToHistory } from '../../services/historyService';
+import { classicTheme } from '../../services/preloadedThemes';
 import { type GameTheme, type PromptHistoryItem } from '../../types';
 
 interface ThemeGeneratorProps {
@@ -31,7 +32,6 @@ const ThemeGenerator: React.FC<ThemeGeneratorProps> = ({ prompt, onPromptChange,
       const theme = await generateTheme(prompt);
       addPromptToHistory(prompt);
       onThemeGenerated(theme);
-    // FIX: Added curly braces to the catch block to fix syntax error.
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred.');
     } finally {
@@ -39,9 +39,21 @@ const ThemeGenerator: React.FC<ThemeGeneratorProps> = ({ prompt, onPromptChange,
     }
   }, [prompt, onThemeGenerated]);
   
+  const handlePlayClassic = useCallback(() => {
+    // We add the classic theme to history to track its plays and high scores too
+    addPromptToHistory(classicTheme.prompt);
+    onThemeGenerated(classicTheme);
+  }, [onThemeGenerated]);
+
   const handleUsePrompt = (p: string) => {
-    onPromptChange(p);
-    setIsHistoryVisible(false);
+    // If the user selects the classic theme from history, load it directly
+    if (p === classicTheme.prompt) {
+        handlePlayClassic();
+        setIsHistoryVisible(false);
+    } else {
+        onPromptChange(p);
+        setIsHistoryVisible(false);
+    }
   }
 
   return (
@@ -86,6 +98,22 @@ const ThemeGenerator: React.FC<ThemeGeneratorProps> = ({ prompt, onPromptChange,
           </div>
           {error && <p className="mt-4 text-red-400">{error}</p>}
         </form>
+
+        <div className="relative flex py-5 items-center">
+          <div className="flex-grow border-t border-gray-600"></div>
+          <span className="flex-shrink mx-4 text-gray-400">Or</span>
+          <div className="flex-grow border-t border-gray-600"></div>
+        </div>
+        
+        <button
+          type="button"
+          onClick={handlePlayClassic}
+          disabled={isLoading}
+          className="w-full px-4 py-3 bg-gradient-to-r from-green-400 to-blue-500 text-white font-bold rounded-md hover:opacity-90 transition-opacity disabled:opacity-50"
+        >
+          Play Classic Mode
+        </button>
+
       </div>
 
       {isHistoryVisible && (

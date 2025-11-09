@@ -14,9 +14,9 @@ export const PIPE_SPACING = 250;
 export const PIPE_SPEED = 2.5;
 
 // Difficulty Scaling Constants
-export const SCORE_DIFFICULTY_INTERVAL = 8; // Every 8 points, difficulty increases
-export const PIPE_SPEED_INCREASE = 0.2;
-export const PIPE_GAP_DECREASE = 3;
+export const SCORE_DIFFICULTY_INTERVAL = 5; // Every 5 points, difficulty increases
+export const PIPE_SPEED_EXP_FACTOR = 1.04; // Speed increases by this factor
+export const PIPE_GAP_DECAY_FACTOR = 0.985; // Gap decreases by this factor
 export const MIN_PIPE_GAP = 120; // The smallest the gap can get
 export const MAX_PIPE_SPEED = 5;   // The fastest the pipes can move
 

@@ -3,7 +3,7 @@ import { type GameTheme, type GameState, type Pipe as PipeType } from '../types'
 import {
   SCREEN_HEIGHT, SCREEN_WIDTH, BIRD_SIZE, BIRD_LEFT_POSITION, GRAVITY,
   JUMP_VELOCITY, MAX_VELOCITY, PIPE_WIDTH, PIPE_GAP, PIPE_SPACING, PIPE_SPEED,
-  SCORE_DIFFICULTY_INTERVAL, PIPE_SPEED_INCREASE, PIPE_GAP_DECREASE, MIN_PIPE_GAP, MAX_PIPE_SPEED, BIRD_HITBOX_SCALE
+  SCORE_DIFFICULTY_INTERVAL, PIPE_SPEED_EXP_FACTOR, PIPE_GAP_DECAY_FACTOR, MIN_PIPE_GAP, MAX_PIPE_SPEED, BIRD_HITBOX_SCALE
 } from '../constants';
 import * as historyService from '../services/historyService';
 import Bird from './Bird';
@@ -105,8 +105,8 @@ const Game: React.FC<GameProps> = ({ gameTheme, onBack }) => {
 
     // --- Difficulty Scaling ---
     const difficultyLevel = Math.floor(score / SCORE_DIFFICULTY_INTERVAL);
-    const currentPipeSpeed = Math.min(MAX_PIPE_SPEED, PIPE_SPEED + difficultyLevel * PIPE_SPEED_INCREASE);
-    const currentPipeGap = Math.max(MIN_PIPE_GAP, PIPE_GAP - difficultyLevel * PIPE_GAP_DECREASE);
+    const currentPipeSpeed = Math.min(MAX_PIPE_SPEED, PIPE_SPEED * Math.pow(PIPE_SPEED_EXP_FACTOR, difficultyLevel));
+    const currentPipeGap = Math.max(MIN_PIPE_GAP, PIPE_GAP * Math.pow(PIPE_GAP_DECAY_FACTOR, difficultyLevel));
 
     // --- Physics and Collision Detection ---
     const nextBirdVelocity = Math.min(birdVelocity + GRAVITY, MAX_VELOCITY);

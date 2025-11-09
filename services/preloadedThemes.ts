@@ -1,3 +1,28 @@
 import { type GameTheme } from '../types';
 
-export const preloadedThemes: GameTheme[] = [];
+const classicBirdBase64 = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA5NiA5NiI+PHJlY3Qgd2lkdGg9Ijk2IiBoZWlnaHQ9Ijk2IiBmaWxsPSIjMDBGRjAwIi8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNCAtMikgc2NhbGUoMS4xKSI+PHBhdGggZD0iTSAzMCA1MCAzMCAzNSwgNDUgMjUsIDYwIDMwIEMgNzUgMzUsIDgwIDUwLCA3MCA2NSBDIDYwIDgwLCAzMCA2NSwgMzAgNTAgWiIgZmlsbD0iI0ZCQkYyNCIvPjxwYXRoIGQ9Ik0gNDUgNDggQyA1NSA0MiwgNjUgNDUsIDYwIDU1IFoiIGZpbGw9IiNGREU2OEEiLz48Y2lyY2xlIGN4PSI2NSIgY3k9IjQ1IiByPSI2IiBmaWxsPSJ3aGl0ZSIgLz48Y2lyY2xlIGN4PSI2NyIgY3k9IjQ1IiByPSIzIiBmaWxsPSJibGFjayIgLz48cGF0aCBkPSJNIDcwIDQ4IEwgODUgNTIgTCA3MCA1NiBaIiBmaWxsPSIjRjk3MzE2Ii8+PC9nPjwvc3ZnPg==';
+const classicBackgroundBase64 = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgNjAwIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iIzRlYzBjYSIvPjxwYXRoIGQ9Ik0gLTUwIDE1MCBhIDQwIDQwIDAgMCAxIDAgODAgSCAyNTAgYSA0MCA0MCAwIDAgMSAwIC04MCBhIDIwIDIwIDAgMCAxIC0yMCAtMjAgYSA1MCA1MCAwIDAgMCAtMTAwIDAgYSAyMCAyMCAwIDAgMSAtMjAgMjAgWiIgZmlsbD0id2hpdGUiIG9wYWNpdHk9IjAuOSIvPjxwYXRoIGQ9Ik0gMTUwIDI1MCBhIDMwIDMwIDAgMCAxIDAgNjAgSCA0MDAgYSAzMCAzMCAwIDAgMSAwIC02MCBhIDE1IDE1IDAgMCAxIC0xNSAtMTUgYSA0MCA0MCAwIDAgMCAtODAgMCBhIDE1IDE1IDAgMCAxIC0xNSAxNSBaIiBmaWxsPSJ3aGl0ZSIgb3BhY2l0eT0iMC44Ii8+PHJlY3QgeD0iMCIgeT0iNDgwIiB3aWR0aD0iNDAwIiBoZWlnaHQ9IjEyMCIgZmlsbD0iI2RlZDg5NSIgLz48cmVjdCB4PSIwIiB5PSI0NTAiIHdpZHRoPSI0MDAiIGhlaWdodD0iMzAiIGZpbGw9IiM3OEMwMzAiIC8+PHJlY3QgeD0iMjAiIHk9IjM4MCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjcwIiBmaWxsPSIjMDA4NzUxIiAvPjxyZWN0IHg9IjMwIiB5PSIzNjAiIHdpZHRoPSIxMCIgaGVpZ2h0PSIyMCIgZmlsbD0iIzAwODc1MSIgLz48cmVjdCB4PSI5MCIgeT0iNDAwIiB3aWR0aD0iNDAiIGhlaWdodD0iNTAiIGZpbGw9IiMwMDg3NTEiIC8+PHJlY3QgeD0iMTUwIiB5PSIzNTAiIHdpZHRoPSI1MCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiMwMDg3NTEiIC8+PHJlY3QgeD0iMjIwIiB5PSI0MjAiIHdpZHRoPSIzMCIgaGVpZ2h0PSIzMCIgZmlsbD0iIzAwODc1MSIgLz48cmVjdCB4PSIyNjAiIHk9IjM5MCIgd2lkdGg9IjcwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjMDA4NzUxIiAvPjxyZWN0IHg9IjM0MCIgeT0iMzcwIiB3aWR0aD0iNDAiIGhlaWdodD0iODAiIGZpbGw9IiMwMDg3NTEiIC8+PC9zdmc+';
+
+export const classicTheme: GameTheme = {
+  themeName: 'Classic Mode',
+  prompt: 'Classic Flappy Bird', // Used as the key in history service
+  character: {
+    name: 'Flappy',
+    description: 'A classic yellow bird with a prominent beak and a single wing.',
+    imageUrl: classicBirdBase64,
+  },
+  obstacle: {
+    name: 'Green Pipes',
+    description: 'Iconic green pipes that pose a challenge.',
+    color: '#74BF2E',
+  },
+  background: {
+    description: 'A daytime sky with clouds above a city skyline.',
+    imageUrl: classicBackgroundBase64,
+  },
+};
+
+// This structure is kept in case more preloaded themes are added in the future.
+export const preloadedThemes: GameTheme[] = [
+  classicTheme,
+];
