@@ -3,7 +3,7 @@
 
 A modern, AI-powered twist on the classic "Flappy Bird" game. This project demonstrates the power of generative AI by allowing players to create unique game themes—including the character, obstacles, and background—simply by describing them in text.
 
-Built with **React**, **TypeScript**, and the **Google Gemini API**, this application is a fully functional Progressive Web App (PWA) designed for a seamless mobile-first experience.
+Built with **React**, **TypeScript**, and the **Google Gemini API**, this application is a fully functional, high-performance Progressive Web App (PWA) designed for a seamless mobile-first experience.
 
 ## Table of Contents
 - [What is this App?](#what-is-this-app)
@@ -17,11 +17,14 @@ Built with **React**, **TypeScript**, and the **Google Gemini API**, this applic
 
 AI Flappy Game reimagines a classic mobile game by putting creative control in the hands of the player. Instead of a single, static theme, players can generate endless visual styles using the Gemini AI. Want to play as a "cyberpunk corgi flying through a neon-lit Tokyo"? Just type it in, and the game's assets are generated on the fly.
 
-This project serves as a showcase for building dynamic, user-driven content with modern web technologies and powerful generative AI models.
+This project serves as a showcase for building dynamic, user-driven content with modern web technologies and powerful generative AI models, with a strong focus on performance and user experience.
 
 ## Core Features
 
-- **AI-Powered Theme Generation**: The core of the app. Users provide a text prompt, and the Gemini API generates a JSON object describing the theme, along with two images (character and background).
+- **AI-Powered Theme Generation**: The core of the app. Users provide a text prompt, and the Gemini API generates a complete theme, including a character sprite, a scrolling background, and a vertically-tileable texture for the pipe obstacles.
+- **High-Performance Canvas Rendering**: To ensure a smooth framerate, the game avoids slow DOM manipulation for animations. It leverages the HTML5 Canvas API to efficiently draw the character, all pipes, and visual effects, managed by a central game loop.
+- **GPU-Accelerated Motion**: Uses CSS `transform` properties for background scrolling and character positioning, offloading animation work to the GPU for a jank-free experience on all devices.
+- **Client-Side Image Processing**: Features a robust, on-the-fly chroma keying process that removes the background from the AI-generated character sprite directly in the browser, demonstrating advanced image manipulation techniques.
 - **Classic Mode**: A pre-built, offline-ready theme is included so users can play instantly without using the AI.
 - **Dynamic Gameplay**: The game's difficulty scales exponentially, increasing pipe speed and shrinking the pipe gap every 5 points for a challenging experience.
 - **Progressive Web App (PWA)**: Fully installable on mobile devices, with offline capabilities thanks to a Service Worker. All core game logic and the "Classic Mode" are available offline after the first visit.
@@ -87,7 +90,7 @@ To prove you own the website and allow the app to run in fullscreen (without the
 
 ## Monetization & Cost Management Strategy
 
-Calling the Gemini API costs money. A single theme generation in this app makes three API calls (1 text, 2 image). Unrestricted free access would quickly become very expensive. Here is a robust strategy to make the app profitable and sustainable.
+Calling the Gemini API costs money. A single theme generation in this app makes four API calls (1 for the theme description and 3 for the images of the character, background, and obstacle). Unrestricted free access would quickly become very expensive. Here is a robust strategy to make the app profitable and sustainable.
 
 ### Monetizing the App
 
@@ -107,7 +110,7 @@ A "freemium" model based on credits is ideal for this use case.
 
 Controlling API costs is critical for survival.
 
-1.  **The Credit System is Your First Line of Defense**: By directly linking API usage to revenue (or an ad view), you ensure your costs are covered. The price per credit should be calculated to cover the average cost of three API calls plus a profit margin.
+1.  **The Credit System is Your First Line of Defense**: By directly linking API usage to revenue (or an ad view), you ensure your costs are covered. The price per credit should be calculated to cover the average cost of the API calls plus a profit margin.
 
 2.  **Implement a Backend Server**: **Do not call the Gemini API directly from the client-side code in a production app.** Your API key would be exposed. A backend server (e.g., using Node.js/Express or Firebase Functions) is essential.
     - The client app sends a prompt to your server.
