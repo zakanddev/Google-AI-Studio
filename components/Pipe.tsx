@@ -4,21 +4,24 @@ import { SCREEN_HEIGHT, PIPE_WIDTH } from '../constants';
 interface PipeProps {
   x: number;
   gapY: number;
-  color: string;
+  imageUrl: string;
   pipeGap: number;
 }
 
 const PIPE_LIP_HEIGHT = 25;
 const LIP_INSET = 4; // How much wider the lip is on each side
 
-const Pipe: React.FC<PipeProps> = ({ x, gapY, color, pipeGap }) => {
+const Pipe: React.FC<PipeProps> = ({ x, gapY, imageUrl, pipeGap }) => {
 
   // Common style for the main vertical part of the pipe
   const pipeBodyStyle: React.CSSProperties = {
     position: 'absolute',
     left: x,
     width: PIPE_WIDTH,
-    background: color,
+    backgroundImage: `url(${imageUrl})`,
+    backgroundRepeat: 'repeat-y',
+    backgroundSize: `${PIPE_WIDTH}px auto`,
+    imageRendering: 'pixelated',
     borderLeft: '2px solid black',
     borderRight: '2px solid black',
     // Inset shadow creates a subtle 3D / lighting effect
@@ -31,7 +34,10 @@ const Pipe: React.FC<PipeProps> = ({ x, gapY, color, pipeGap }) => {
     left: x - LIP_INSET,
     width: PIPE_WIDTH + (LIP_INSET * 2),
     height: PIPE_LIP_HEIGHT,
-    background: color,
+    backgroundImage: `url(${imageUrl})`,
+    backgroundPosition: 'center',
+    backgroundSize: 'cover',
+    imageRendering: 'pixelated',
     border: '2px solid black',
     borderRadius: '6px',
     boxShadow: 'inset 6px 0px 10px rgba(0,0,0,0.4)',
@@ -70,7 +76,7 @@ const Pipe: React.FC<PipeProps> = ({ x, gapY, color, pipeGap }) => {
         style={{
           ...pipeLipStyle,
           top: gapY + pipeGap,
-          // Add a subtle "up" shadow to the top of the lip
+          // Add a "up" shadow to the top of the lip
           boxShadow: `${pipeLipStyle.boxShadow}, 0 -3px 3px rgba(0,0,0,0.3)`
         }}
       />

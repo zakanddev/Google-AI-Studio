@@ -50,13 +50,16 @@ const Game: React.FC<GameProps> = ({ gameTheme, onBack }) => {
     setIsAssetsLoading(true);
     const charImg = new Image();
     const bgImg = new Image();
+    const pipeImg = new Image();
     
     charImg.src = gameTheme.character.imageUrl;
     bgImg.src = gameTheme.background.imageUrl;
+    pipeImg.src = gameTheme.obstacle.imageUrl;
 
     Promise.all([
       new Promise((resolve, reject) => { charImg.onload = resolve; charImg.onerror = reject; }),
       new Promise((resolve, reject) => { bgImg.onload = resolve; bgImg.onerror = reject; }),
+      new Promise((resolve, reject) => { pipeImg.onload = resolve; pipeImg.onerror = reject; }),
     ]).then(() => {
       setIsAssetsLoading(false);
     }).catch(err => {
@@ -246,7 +249,7 @@ const Game: React.FC<GameProps> = ({ gameTheme, onBack }) => {
         <Background imageUrl={gameTheme.background.imageUrl} scrollPosition={bgScroll} />
         <BirdTrail points={trail} />
         {pipes.map((pipe, index) => (
-          <Pipe key={index} x={pipe.x} gapY={pipe.gapY} color={gameTheme.obstacle.color} pipeGap={pipe.gapSize} />
+          <Pipe key={index} x={pipe.x} gapY={pipe.gapY} imageUrl={gameTheme.obstacle.imageUrl} pipeGap={pipe.gapSize} />
         ))}
         <Bird y={birdY} imageUrl={gameTheme.character.imageUrl} rotation={birdRotation} />
         <div className="absolute top-4 left-1/2 -translate-x-1/2 text-5xl font-bold text-white" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.7)' }}>

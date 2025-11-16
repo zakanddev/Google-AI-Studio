@@ -9,7 +9,7 @@ export interface GameTheme {
   obstacle: {
     name: string;
     description: string;
-    color: string;
+    imageUrl: string;
   };
   background: {
     description: string;

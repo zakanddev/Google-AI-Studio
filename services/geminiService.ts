@@ -37,9 +37,12 @@ const themeDescriptionSchema = {
             properties: {
                 name: { type: Type.STRING, description: 'The name of the obstacles.' },
                 description: { type: Type.STRING, description: 'A short, visually descriptive sentence for the pixel art obstacles.' },
-                color: { type: Type.STRING, description: 'A hex color code for the obstacles (e.g., #4ade80 for green).' },
+                imagePrompt: { 
+                    type: Type.STRING, 
+                    description: 'A detailed prompt for generating a pixel art texture for the obstacles. The texture must be vertically tileable. E.g., "Ancient crumbling stone pillar with glowing blue runes, pixel art."' 
+                },
             },
-            required: ['name', 'description', 'color']
+            required: ['name', 'description', 'imagePrompt']
         },
         background: {
             type: Type.OBJECT,
@@ -98,12 +101,14 @@ export const generateTheme = async (prompt: string): Promise<GameTheme> => {
     const themeDescriptions = JSON.parse(jsonText);
     
     // 2. Generate images based on the descriptions
-    const characterPrompt = `${themeDescriptions.character.description}. Pixel art style. The character MUST be on a solid, pure green screen background (#00FF00), which will be removed later.`;
+    const characterPrompt = `Side-view profile of ${themeDescriptions.character.description}, facing right. Pixel art style. The character MUST be on a solid, pure green screen background (#00FF00), which will be removed later. No text, no other objects.`;
     const backgroundPrompt = `${themeDescriptions.background.description}. 16-bit pixel art style.`;
+    const obstaclePrompt = `${themeDescriptions.obstacle.imagePrompt}. Vertically seamless tileable texture. Pixel art style.`;
 
-    const [characterImageUrl, backgroundImageUrl] = await Promise.all([
+    const [characterImageUrl, backgroundImageUrl, obstacleImageUrl] = await Promise.all([
         generateImage(characterPrompt),
-        generateImage(backgroundPrompt)
+        generateImage(backgroundPrompt),
+        generateImage(obstaclePrompt)
     ]);
 
     // 3. Assemble the final theme object
@@ -115,7 +120,11 @@ export const generateTheme = async (prompt: string): Promise<GameTheme> => {
             description: themeDescriptions.character.description,
             imageUrl: characterImageUrl,
         },
-        obstacle: themeDescriptions.obstacle,
+        obstacle: {
+            name: themeDescriptions.obstacle.name,
+            description: themeDescriptions.obstacle.description,
+            imageUrl: obstacleImageUrl,
+        },
         background: {
             description: themeDescriptions.background.description,
             imageUrl: backgroundImageUrl,
