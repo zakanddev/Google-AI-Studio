@@ -27,6 +27,7 @@ const Game: React.FC<GameProps> = ({ gameTheme, onBack }) => {
   const [score, setScore] = useState(0);
   const [highScore, setHighScore] = useState(0);
   const [isAssetsLoading, setIsAssetsLoading] = useState(true);
+  const [obstacleImage, setObstacleImage] = useState<HTMLImageElement | null>(null);
   const [bgScroll, setBgScroll] = useState(0);
   const [trail, setTrail] = useState<{ x: number; y: number }[]>([]);
   const gameLoopRef = useRef<number | null>(null);
@@ -61,6 +62,7 @@ const Game: React.FC<GameProps> = ({ gameTheme, onBack }) => {
       new Promise((resolve, reject) => { bgImg.onload = resolve; bgImg.onerror = reject; }),
       new Promise((resolve, reject) => { pipeImg.onload = resolve; pipeImg.onerror = reject; }),
     ]).then(() => {
+      setObstacleImage(pipeImg);
       setIsAssetsLoading(false);
     }).catch(err => {
         console.error("Failed to load game assets", err);
@@ -248,9 +250,7 @@ const Game: React.FC<GameProps> = ({ gameTheme, onBack }) => {
       >
         <Background imageUrl={gameTheme.background.imageUrl} scrollPosition={bgScroll} />
         <BirdTrail points={trail} />
-        {pipes.map((pipe, index) => (
-          <Pipe key={index} x={pipe.x} gapY={pipe.gapY} imageUrl={gameTheme.obstacle.imageUrl} pipeGap={pipe.gapSize} />
-        ))}
+        <Pipe pipes={pipes} obstacleImage={obstacleImage} />
         <Bird y={birdY} imageUrl={gameTheme.character.imageUrl} rotation={birdRotation} />
         <div className="absolute top-4 left-1/2 -translate-x-1/2 text-5xl font-bold text-white" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.7)' }}>
           {score}

@@ -124,10 +124,12 @@ const Bird: React.FC<BirdProps> = ({ y, imageUrl, rotation }) => {
       height={BIRD_SIZE}
       className="absolute"
       style={{
-        top: y,
-        left: BIRD_LEFT_POSITION,
+        top: 0,
+        left: 0,
+        zIndex: 3,
         imageRendering: 'pixelated', // Ensures crisp pixels for pixel art
         willChange: 'transform', // Performance hint for the browser
+        transform: `translate(${BIRD_LEFT_POSITION}px, ${y}px)`,
       }}
     />
   );

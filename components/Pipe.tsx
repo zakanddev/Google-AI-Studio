@@ -1,87 +1,75 @@
-import React from 'react';
-import { SCREEN_HEIGHT, PIPE_WIDTH } from '../constants';
+import React, { useRef, useEffect, useState } from 'react';
+import { SCREEN_WIDTH, SCREEN_HEIGHT, PIPE_WIDTH } from '../constants';
+import { type Pipe as PipeType } from '../types';
 
-interface PipeProps {
-  x: number;
-  gapY: number;
-  imageUrl: string;
-  pipeGap: number;
+interface PipesProps {
+  pipes: PipeType[];
+  obstacleImage: HTMLImageElement | null;
 }
 
 const PIPE_LIP_HEIGHT = 25;
 const LIP_INSET = 4; // How much wider the lip is on each side
 
-const Pipe: React.FC<PipeProps> = ({ x, gapY, imageUrl, pipeGap }) => {
+const PipesCanvas: React.FC<PipesProps> = ({ pipes, obstacleImage }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [pattern, setPattern] = useState<CanvasPattern | null>(null);
 
-  // Common style for the main vertical part of the pipe
-  const pipeBodyStyle: React.CSSProperties = {
-    position: 'absolute',
-    left: x,
-    width: PIPE_WIDTH,
-    backgroundImage: `url(${imageUrl})`,
-    backgroundRepeat: 'repeat-y',
-    backgroundSize: `${PIPE_WIDTH}px auto`,
-    imageRendering: 'pixelated',
-    borderLeft: '2px solid black',
-    borderRight: '2px solid black',
-    // Inset shadow creates a subtle 3D / lighting effect
-    boxShadow: 'inset 6px 0px 10px rgba(0,0,0,0.4)',
-  };
+  // Create the reusable pattern when the image is available
+  useEffect(() => {
+    if (obstacleImage && canvasRef.current) {
+      const ctx = canvasRef.current.getContext('2d');
+      if (ctx) {
+        const p = ctx.createPattern(obstacleImage, 'repeat');
+        setPattern(p);
+      }
+    }
+  }, [obstacleImage]);
 
-  // Common style for the end piece of the pipe
-  const pipeLipStyle: React.CSSProperties = {
-    position: 'absolute',
-    left: x - LIP_INSET,
-    width: PIPE_WIDTH + (LIP_INSET * 2),
-    height: PIPE_LIP_HEIGHT,
-    backgroundImage: `url(${imageUrl})`,
-    backgroundPosition: 'center',
-    backgroundSize: 'cover',
-    imageRendering: 'pixelated',
-    border: '2px solid black',
-    borderRadius: '6px',
-    boxShadow: 'inset 6px 0px 10px rgba(0,0,0,0.4)',
-  };
+  // Redraw all pipes when their positions change or the pattern is ready
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
+    
+    ctx.clearRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    if (!pattern) return;
+
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+
+    for (const pipe of pipes) {
+      // --- Top Pipe ---
+      const topPipeBodyHeight = pipe.gapY - PIPE_LIP_HEIGHT;
+      // Body
+      ctx.fillStyle = pattern;
+      ctx.fillRect(pipe.x, 0, PIPE_WIDTH, topPipeBodyHeight);
+      ctx.strokeRect(pipe.x, 0, PIPE_WIDTH, topPipeBodyHeight);
+      // Lip
+      ctx.fillRect(pipe.x - LIP_INSET, topPipeBodyHeight, PIPE_WIDTH + LIP_INSET * 2, PIPE_LIP_HEIGHT);
+      ctx.strokeRect(pipe.x - LIP_INSET, topPipeBodyHeight, PIPE_WIDTH + LIP_INSET * 2, PIPE_LIP_HEIGHT);
+      
+      // --- Bottom Pipe ---
+      const bottomPipeY = pipe.gapY + pipe.gapSize;
+      // Lip
+      ctx.fillRect(pipe.x - LIP_INSET, bottomPipeY, PIPE_WIDTH + LIP_INSET * 2, PIPE_LIP_HEIGHT);
+      ctx.strokeRect(pipe.x - LIP_INSET, bottomPipeY, PIPE_WIDTH + LIP_INSET * 2, PIPE_LIP_HEIGHT);
+      // Body
+      const bottomPipeBodyY = bottomPipeY + PIPE_LIP_HEIGHT;
+      ctx.fillRect(pipe.x, bottomPipeBodyY, PIPE_WIDTH, SCREEN_HEIGHT - bottomPipeBodyY);
+      ctx.strokeRect(pipe.x, bottomPipeBodyY, PIPE_WIDTH, SCREEN_HEIGHT - bottomPipeBodyY);
+    }
+  }, [pipes, pattern]);
 
   return (
-    <>
-      {/* Top Pipe Body */}
-      <div
-        style={{
-          ...pipeBodyStyle,
-          top: 0,
-          height: gapY,
-        }}
-      />
-      {/* Top Pipe Lip */}
-      <div
-        style={{
-          ...pipeLipStyle,
-          top: gapY - PIPE_LIP_HEIGHT,
-          // Add a subtle drop shadow to the bottom of the lip
-          boxShadow: `${pipeLipStyle.boxShadow}, 0 3px 3px rgba(0,0,0,0.3)`
-        }}
-      />
-
-      {/* Bottom Pipe Body */}
-      <div
-        style={{
-          ...pipeBodyStyle,
-          top: gapY + pipeGap,
-          height: SCREEN_HEIGHT - (gapY + pipeGap),
-        }}
-      />
-      {/* Bottom Pipe Lip */}
-      <div
-        style={{
-          ...pipeLipStyle,
-          top: gapY + pipeGap,
-          // Add a "up" shadow to the top of the lip
-          boxShadow: `${pipeLipStyle.boxShadow}, 0 -3px 3px rgba(0,0,0,0.3)`
-        }}
-      />
-    </>
+    <canvas
+      ref={canvasRef}
+      width={SCREEN_WIDTH}
+      height={SCREEN_HEIGHT}
+      className="absolute top-0 left-0"
+      style={{ zIndex: 2, pointerEvents: 'none' }}
+    />
   );
 };
 
-export default Pipe;
+export default PipesCanvas;

@@ -11,25 +11,32 @@ const Background: React.FC<BackgroundProps> = ({ imageUrl, scrollPosition }) => 
   const x1 = -(scrollPosition % SCREEN_WIDTH);
   const x2 = x1 + SCREEN_WIDTH;
 
+  const styleCommon: React.CSSProperties = {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: SCREEN_WIDTH,
+    height: '100%',
+    backgroundImage: `url(${imageUrl})`,
+    backgroundRepeat: 'no-repeat',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    willChange: 'transform',
+  };
+
   return (
     <>
       <div
-        className="absolute top-0 h-full bg-cover bg-center"
         style={{
-          backgroundImage: `url(${imageUrl})`,
-          width: SCREEN_WIDTH,
-          left: x1,
-          height: '100%',
+          ...styleCommon,
+          transform: `translateX(${x1}px)`,
         }}
         aria-hidden="true"
       />
       <div
-        className="absolute top-0 h-full bg-cover bg-center"
         style={{
-          backgroundImage: `url(${imageUrl})`,
-          width: SCREEN_WIDTH,
-          left: x2,
-          height: '100%',
+          ...styleCommon,
+          transform: `translateX(${x2}px)`,
         }}
         aria-hidden="true"
       />
